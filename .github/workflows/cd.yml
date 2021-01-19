@@ -1,0 +1,27 @@
+---
+name: cd
+
+on:
+  push:
+    tags:
+    - '*.*.*.*'
+
+jobs:
+  release-dockerimage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Extract my version from tag name
+      run: |
+        echo "MY_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+    - name: Debug
+      run: |
+        echo "$MY_VERSION"
+    # https://github.com/marketplace/actions/build-and-push-docker-images
+    - name: Build and push Docker image for my etherpad-lite ${{ env.DYNDNSD_VERSION }}
+      uses: docker/build-push-action@v1
+      with:
+        username: cmur2
+        password: ${{ secrets.DOCKER_TOKEN }}
+        repository: cmur2/my-etherpad-lite
+        tag_with_ref: true
