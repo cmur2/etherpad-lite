@@ -1,4 +1,4 @@
-FROM node:10-buster-slim
+FROM node:10-buster as builder
 
 # plugins to install while building the container. By default no plugins are
 # installed.
@@ -13,6 +13,30 @@ ARG ETHERPAD_PLUGINS=
 # other things, assets are minified & compressed).
 ENV NODE_ENV=production
 
+WORKDIR /opt/etherpad-lite
+
+COPY ./ ./
+
+# Copy the configuration file.
+COPY ./settings.json.docker /opt/etherpad-lite/settings.json
+
+# install node dependencies for Etherpad
+# Install the plugins, if ETHERPAD_PLUGINS is not empty.
+#
+# Bash trick: in the for loop ${ETHERPAD_PLUGINS} is NOT quoted, in order to be
+# able to split at spaces.
+# Fix permissions for root group
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends python && \
+    bin/installDeps.sh && \
+    for PLUGIN_NAME in ${ETHERPAD_PLUGINS}; do npm install "${PLUGIN_NAME}" || exit 1; done && \
+    chmod -R g=u .
+
+
+FROM node:10-buster-slim
+
+ENV NODE_ENV=production
+
 # Follow the principle of least privilege: run as unprivileged user.
 #
 # Running as non-root enables running this image in platforms like OpenShift
@@ -25,21 +49,10 @@ USER etherpad
 
 WORKDIR /opt/etherpad-lite
 
-COPY --chown=etherpad:0 ./ ./
+COPY --from=builder --chown=etherpad:0 /opt/etherpad-lite .
 
-# Copy the configuration file.
-COPY --chown=etherpad:0 ./settings.json.docker /opt/etherpad-lite/settings.json
-
-# install node dependencies for Etherpad
-# Install the plugins, if ETHERPAD_PLUGINS is not empty.
-#
-# Bash trick: in the for loop ${ETHERPAD_PLUGINS} is NOT quoted, in order to be
-# able to split at spaces.
 # Fix permissions for root group
-RUN bin/installDeps.sh && \
-    rm -rf ~/.npm/_cacache && \
-    for PLUGIN_NAME in ${ETHERPAD_PLUGINS}; do npm install "${PLUGIN_NAME}" || exit 1; done && \
-    chmod -R g=u .
+RUN chmod g=u .
 
 EXPOSE 9001
 
