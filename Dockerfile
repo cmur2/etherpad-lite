@@ -29,6 +29,7 @@ COPY ./settings.json.docker /opt/etherpad-lite/settings.json
 RUN apt-get update && \
     apt-get install -y --no-install-recommends python && \
     src/bin/installDeps.sh && \
+    (cd src && npm install sqlite3) && \
     for PLUGIN_NAME in ${ETHERPAD_PLUGINS}; do npm install "${PLUGIN_NAME}" || exit 1; done && \
     chmod -R g=u .
 
