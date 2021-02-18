@@ -57,4 +57,4 @@ RUN chmod g=u .
 
 EXPOSE 9001
 
-CMD ["node", "--experimental-worker", "node_modules/ep_etherpad-lite/node/server.js"]
+CMD ["node", "--experimental-worker", "src/node/server.js"]
