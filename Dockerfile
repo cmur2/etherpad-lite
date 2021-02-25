@@ -1,4 +1,4 @@
-FROM node:10-buster as builder
+FROM node:14-buster as builder
 
 # plugins to install while building the container. By default no plugins are
 # installed.
@@ -34,7 +34,7 @@ RUN apt-get update && \
     chmod -R g=u .
 
 
-FROM node:10-buster-slim
+FROM node:14-buster-slim
 
 ENV NODE_ENV=production
 
@@ -56,5 +56,4 @@ COPY --from=builder --chown=etherpad:0 /opt/etherpad-lite .
 RUN chmod g=u .
 
 EXPOSE 9001
-
-CMD ["node", "--experimental-worker", "src/node/server.js"]
+CMD ["node", "src/node/server.js"]
